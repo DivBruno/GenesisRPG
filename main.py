@@ -78,7 +78,7 @@ def success(dice, mod, cd):
     return result
 
 
-# Some attributes have scaling, mostly of these are the same equation, and this function calculate it
+# Some attributes have scaling, mostly of these have the same equation, and this function calculate it
 def escalonamento(base, meio, maximo, aumento_i, aumento_f, nivel):
     if 11 > nivel:
         atributo = base + ((nivel - 1) // 2 * aumento_i)
@@ -123,7 +123,11 @@ def evolve_status(status, level_pre_evo):
         weight_agora = escalonamento(10, 34, 50, 6, 4, ficha_1["attributes"]["strength"])
         aumento = weight_agora - weight_antes
         return aumento
-
+    elif status == "HP2":
+        hp_antes = escalonamento(0, 4, 8, 1, 1, level_pre_evo)
+        hp_agora = escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])
+        aumento = hp_agora - hp_antes
+        return aumento
 
 def dice_roll():
     while True:
@@ -688,7 +692,8 @@ def character_sheet(jogador="bruno"):
     print("Digite as informações")
 
     #input to some of the basics
-    """for x, y in ficha_1.items():
+    """
+    for x, y in ficha_1.items():
         if x == "player" or x == "name" or x == "level" or x == "race" or x == "background":
             ficha_1[x] = input(f"Digite o {x}: ")
 
@@ -712,7 +717,7 @@ def character_sheet(jogador="bruno"):
                         break
                     else:
                         ficha_1[x] = input("Digite a raça: ")
-"""
+    """
 
 
     #predef basics, to speed tests, REMOVE LATER
@@ -720,7 +725,7 @@ def character_sheet(jogador="bruno"):
     ficha_1["player"] = jogador
     ficha_1["name"] = "Cícero"
     ficha_1["level"] = randint(1,20)
-    ficha_1["race"] = "Humano"
+    ficha_1["race"] = "humano"
     ficha_1["background"] = "Thief"
     #"""
 
@@ -802,6 +807,98 @@ def character_sheet(jogador="bruno"):
     ficha_2["speed"] = escalonamento(3, 11, 15, 2, 1, ficha_1["attributes"]["agility"])
     #calculating the weight
     ficha_3["weight"] = escalonamento(10, 34, 50, 6, 4, ficha_1["attributes"]["strength"])
+
+    print("-"*30)
+    #calculating the HP per resistance
+    if ficha_1["race"].lower() == "humano":
+        #the scale tell how many rolls it'll do
+        print(f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 2 lados, os resultados serão somados à sua vida!")
+        for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+            sleep(2)
+            aumento = randint(1,2)
+            print("-" * 30)
+            print(f"{x+1}° dado: {aumento}")
+            print("-"*30)
+            #a one chance re-roll
+            while True:
+                escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
+                if escolha == "1":
+                    aumento = randint(1, 2)
+                    print("-" * 30)
+                    print(f"{x + 1}° dado rejogado: {aumento}")
+                    break
+                elif escolha == "2":
+                    break
+                else:
+                    print("Escolha inválida, tente novamente.")
+            ficha_2["HP"] += aumento
+    elif ficha_1["race"].lower() == "narim":
+        #the scale tell how many rolls it'll do
+        print(f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 3 lados, os resultados serão somados à sua vida!")
+        for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+            sleep(2)
+            aumento = randint(1,3)
+            print("-" * 30)
+            print(f"{x+1}° dado: {aumento}")
+            print("-"*30)
+            #a one chance re-roll
+            while True:
+                escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
+                if escolha == "1":
+                    aumento = randint(1, 3)
+                    print("-" * 30)
+                    print(f"{x + 1}° dado rejogado: {aumento}")
+                    break
+                elif escolha == "2":
+                    break
+                else:
+                    print("Escolha inválida, tente novamente.")
+            ficha_2["HP"] += aumento
+    elif ficha_1["race"].lower() == "talvano" or ficha_1["race"].lower() == "nefelin":
+        #the scale tell how many rolls it'll do
+        print(f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 4 lados, os resultados serão somados à sua vida!")
+        for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+            sleep(2)
+            aumento = randint(1,4)
+            print("-" * 30)
+            print(f"{x+1}° dado: {aumento}")
+            print("-"*30)
+            #a one chance re-roll
+            while True:
+                escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
+                if escolha == "1":
+                    aumento = randint(1, 4)
+                    print("-" * 30)
+                    print(f"{x + 1}° dado rejogado: {aumento}")
+                    break
+                elif escolha == "2":
+                    break
+                else:
+                    print("Escolha inválida, tente novamente.")
+            ficha_2["HP"] += aumento
+    elif ficha_1["race"].lower() == "alvoriano":
+        #the scale tell how many rolls it'll do
+        print(f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 6 lados, os resultados serão somados à sua vida!")
+        for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+            sleep(2)
+            aumento = randint(1,6)
+            print("-" * 30)
+            print(f"{x+1}° dado: {aumento}")
+            print("-"*30)
+            #a one chance re-roll
+            while True:
+                escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
+                if escolha == "1":
+                    aumento = randint(1, 6)
+                    print("-" * 30)
+                    sleep(1)
+                    print(f"{x + 1}° dado rejogado: {aumento}")
+                    break
+                elif escolha == "2":
+                    break
+                else:
+                    print("Escolha inválida, tente novamente.")
+            ficha_2["HP"] += aumento
 
     ficha_2["armor"] = 0
     ficha_2["resistance"] = 0
@@ -1021,6 +1118,100 @@ def edit_character_sheet():
                 ficha_2["speed"] = escalonamento(3, 11, 15, 2, 1, ficha_1["attributes"]["agility"])
             elif lista[alt-1] == "strength":
                 ficha_3["weight"] = escalonamento(10, 34, 50, 6, 4, ficha_1["attributes"]["strength"])
+            elif lista[alt-1] == "endurance":
+                # calculating the HP per resistance
+                if ficha_1["race"].lower() == "humano":
+                    # the scale tell how many rolls it'll do
+                    print(
+                        f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 2 lados, os resultados serão somados à sua vida!")
+                    for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+                        sleep(2)
+                        aumento = randint(1, 2)
+                        print("-" * 30)
+                        print(f"{x + 1}° dado: {aumento}")
+                        print("-" * 30)
+                        # a one chance re-roll
+                        while True:
+                            escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
+                            if escolha == "1":
+                                aumento = randint(1, 2)
+                                print("-" * 30)
+                                print(f"{x + 1}° dado rejogado: {aumento}")
+                                break
+                            elif escolha == "2":
+                                break
+                            else:
+                                print("Escolha inválida, tente novamente.")
+                        ficha_2["HP"] += aumento
+                elif ficha_1["race"].lower() == "narim":
+                    # the scale tell how many rolls it'll do
+                    print(
+                        f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 3 lados, os resultados serão somados à sua vida!")
+                    for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+                        sleep(2)
+                        aumento = randint(1, 3)
+                        print("-" * 30)
+                        print(f"{x + 1}° dado: {aumento}")
+                        print("-" * 30)
+                        # a one chance re-roll
+                        while True:
+                            escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
+                            if escolha == "1":
+                                aumento = randint(1, 3)
+                                print("-" * 30)
+                                print(f"{x + 1}° dado rejogado: {aumento}")
+                                break
+                            elif escolha == "2":
+                                break
+                            else:
+                                print("Escolha inválida, tente novamente.")
+                        ficha_2["HP"] += aumento
+                elif ficha_1["race"].lower() == "talvano" or ficha_1["race"].lower() == "nefelin":
+                    # the scale tell how many rolls it'll do
+                    print(
+                        f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 4 lados, os resultados serão somados à sua vida!")
+                    for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+                        sleep(2)
+                        aumento = randint(1, 4)
+                        print("-" * 30)
+                        print(f"{x + 1}° dado: {aumento}")
+                        print("-" * 30)
+                        # a one chance re-roll
+                        while True:
+                            escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
+                            if escolha == "1":
+                                aumento = randint(1, 4)
+                                print("-" * 30)
+                                print(f"{x + 1}° dado rejogado: {aumento}")
+                                break
+                            elif escolha == "2":
+                                break
+                            else:
+                                print("Escolha inválida, tente novamente.")
+                        ficha_2["HP"] += aumento
+                elif ficha_1["race"].lower() == "alvoriano":
+                    # the scale tell how many rolls it'll do
+                    print(
+                        f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 6 lados, os resultados serão somados à sua vida!")
+                    for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+                        sleep(2)
+                        aumento = randint(1, 6)
+                        print("-" * 30)
+                        print(f"{x + 1}° dado: {aumento}")
+                        print("-" * 30)
+                        # a one chance re-roll
+                        while True:
+                            escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
+                            if escolha == "1":
+                                aumento = randint(1, 6)
+                                print("-" * 30)
+                                print(f"{x + 1}° dado rejogado: {aumento}")
+                                break
+                            elif escolha == "2":
+                                break
+                            else:
+                                print("Escolha inválida, tente novamente.")
+                        ficha_2["HP"] += aumento
 
         #change the skills
         elif ans == 3:
@@ -1712,8 +1903,11 @@ def edit_character_sheet():
                             ficha_1["attributes"][lista[alt - 1]] += valor
                             ficha_1["attributes point"] -= valor
 
-                            if lista[alt - 1] == "spirit":
-                                ficha_2["spirit"] += evolve_status("SP", level_atual)
+                            if lista[alt - 1] == "endurance":
+                                ficha_2["HP"] += evolve_status("HP2", level_atual)
+
+                            elif lista[alt - 1] == "spirit":
+                                ficha_2["SP"] += evolve_status("SP", level_atual)
 
                             elif lista[alt - 1] == "agility":
                                 ficha_2["speed"] += evolve_status("speed", level_atual)
@@ -1742,18 +1936,449 @@ def edit_character_sheet():
                 print("Salvando... de mentirinha")
                 break
 
+#show basics
+def papa(hp_atual, sp_atual):
+    print("Basics: ")
+    for x, y in ficha_1.items():
+        if x == "name" or x == "level":
+            print(f"{x.capitalize()}: {y}", end=" | ")
+        if x == "situation":
+            print()
+            print(f"{x.capitalize()}: {y}")
+
+    print("=" * 30)
+    print("Status: ")
+    cont = 0
+    for x, y in ficha_2.items():
+        if x == "slots":
+            print()
+            print(f"{x}: ")
+            for teste in range(len(ficha_2[x])):
+                for name, details in ficha_2[x][teste].items():
+                    print(" " * 5, f"* {name.title()} - Dado: {details[0]}, Efeito: {details[1].capitalize()}")
+        else:
+            if cont == 2:
+                print()
+            if x == "HP":
+                print(f"{x.capitalize()}: {hp_atual}/{y}", end=" | ")
+            elif x == "SP":
+                print(f"{x.capitalize()}: {sp_atual}/{y}", end=" | ")
+            else:
+                print(f"{x.capitalize()}: {y}", end = " | ")
+        cont += 1
+
+#show others
+def pepe():
+    print("=" * 30)
+    print("Others:")
+    for x, y in ficha_3.items():
+        if x == "weight":
+            pass
+        elif x == "magic" or x == "ability" or x == "inventory":
+            if x == "inventory":
+                print(f"{x.capitalize()} ({using_weight}/{ficha_3["weight"]}) : ")
+            else:
+                print(f"{x.capitalize()}: ")
+            for z in range(len(ficha_3[x])):
+                for name, details in ficha_3[x][z].items():
+                    if x == "inventory":
+                        print(" " * 2,
+                              f"{z + 1} - {name.title()} - Peso: {details[0]}, Valor: {details[1]}, Extra: {details[2]}")
+                    else:
+                        print(" " * 3, f"~ {name.title()} - Dado: {details[0]}, Efeito: {details[1].capitalize()}")
+        elif x == "annotation":
+            print(f"{x.capitalize()}: {y.capitalize()}")
+
+#show attributes/skills
+def pupu():
+    print("=" * 30)
+    cont = 1
+    color_count = 0
+    for x, y in ficha_1["attributes"].items():
+        cor = cores[color_count % len(cores)]
+        print(f"{Fore.LIGHTMAGENTA_EX}{cont}{Style.RESET_ALL} - {cor}{x.capitalize()}{Style.RESET_ALL}: {y}", end=' | ')
+        # just so it doesn't become a giant line of attributes
+        if cont == 4:
+            print()
+            print()
+        cont += 1
+        color_count += 1
+    print()
+
+    print("=" * 30)
+    # NEW PRINT SKILLS
+    print("SKILLS:")
+    for i, x in enumerate(ficha_1["skills"]):
+        cor = cores[i % len(cores)]
+        print(cor, f"{x.capitalize()}{Style.RESET_ALL}:")
+        for y, z in ficha_1["skills"][x].items():
+            dominio = list(modificador[z].keys())
+            valor = list(modificador[z].values())
+            print(f"{y.capitalize()} = {dominio[0].capitalize()}, {valor[0]}", end=' | ')
+        print()
 
 def battle_mode():
-    print("VOCÊ ESTÁ NO MODO BATALHA, NENHUMA ALTERAÇÃO FEITA SERÁ SALVA! ")
+    hp = ficha_2["HP"]
+    sp = ficha_2["SP"]
+    turns = 1
+    dmg = []
+    dura_dmg = []
+    regen = []
+    dura_regen = []
     while True:
+        total_dmg = 0
+        total_regen = 0
+        print("="*30)
+        papa(hp, sp)
+        print("-"*30)
+        print("VOCÊ ESTÁ NO MODO BATALHA, NENHUMA ALTERAÇÃO FEITA SERÁ SALVA! ") #maybe some will be saved
+        print(f"Turno = {turns}°\n  1 - Passar turno\n  2 - Girar dado\n  3 - Dano/Regeneração\n  4 - Mostrar itens e magias\n  5 - Editar ficha\n  6 - Sair")
+        for x in dmg:
+            total_dmg += x
+        for x in regen:
+            total_regen += x
+        total = total_regen - total_dmg
+        if total < 0:
+            print("Dano por turno total:", abs(total))
+        elif total > 0:
+            print("Regeneração por turno total:", abs(total))
+
+        print("-"*30)
+        ans = input("Escolha uma opção: ")
+
+        # pass the turn, take damage? regenerate if have it
+        if ans == "1":
+            while True:
+                print("Deseja passar o turno?\n1 - Sim\n2 - Não")
+                alt = input("Escolha sua opção: ")
+                if alt == "1":
+                    turns += 1
+                    for x in range(len(dmg)):
+                        pass
+                    for x in range(len(regen)):
+                        pass
+                    break
+                elif alt == "2":
+                    break
+                else:
+                    print("Opção inválida, tente novamente")
+        # shows attributes/skills and roll dice
+        elif ans == "2":
+            pupu()
+            dice_roll()
+        # suffer damage, ticks damage per turn? or make it only when presses "next turn"
+        elif ans == "3":
+            while True:
+                print("-"*30)
+                print("DANO OU REGENERAÇÃO POR TURNO:\n1 - Definir dano por turno\n2 - Definir regeneração por turno\n3 - Sair")
+                print("-"*30)
+                alt = input("Escolha uma opção: ")
+                #damage per turn
+                if alt == "1":
+                    while True:
+                        print("="*30)
+                        print("Dano por turno:\n1 - Adicionar dano\n2 - Remover dano\n3 - Alterar dano\n4 - Sair")
+                        ans = input("Escolha uma opção: ")
+                        #add dmg
+                        if ans == "1":
+                            print("-"*30)
+                            print("Adicionando - ")
+                            # damage
+                            opt = input("Digite o dano por turno: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                if validate_integer(opt) == True:
+                                    opt = int(opt)
+                                    if opt < 0:
+                                        print("Opção inválida, tente novamente")
+                                        opt = input("Digite o dano por turno: (0 para cancelar) ")
+                                    else:
+                                        break
+                                else:
+                                    print("Opção inválida, tente novamente")
+                                    opt = input("Digite o dano por turno: (0 para cancelar) ")
+                            if opt == 0:
+                                break
+                            dmg.append(opt)
+
+                            # duration
+                            opt = input("Digite a duração do dano: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                if validate_integer(opt) == True:
+                                    opt = int(opt)
+                                    if opt < 0:
+                                        print("Opção inválida, tente novamente")
+                                        opt = input("Digite a duração do dano: (0 para cancelar) ")
+                                    else:
+                                        break
+                                else:
+                                    print("Opção inválida, tente novamente")
+                                    opt = input("Digite a duração do dano: (0 para cancelar) ")
+                            if opt == 0:
+                                break
+                            dura_dmg.append(opt)
+
+                        #rmv dmg
+                        elif ans == "2":
+                            print("-" * 30)
+                            print("Removendo:")
+                            for x in range(len(dmg)):
+                                print(f"{x+1} - Dano: {dmg[x]}, Duração: {dura_dmg[x]}")
+                            opt = input("Escolha uma opção: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                if validate_integer(opt) == True:
+                                    opt = int(opt)
+                                    if opt < 0 or opt > len(dmg):
+                                        print("Opção inválida, tente novamente")
+                                        opt = input("Escolha uma opção: (0 para cancelar) ")
+                                    else:
+                                        break
+                                else:
+                                    print("Opção inválida, tente novamente")
+                                    opt = input("Escolha uma opção: (0 para cancelar) ")
+                            if opt == 0:
+                                break
+                            dmg.pop(opt-1)
+                            dura_dmg.pop(opt - 1)
+
+                        #chg dmg
+                        elif ans == "3":
+                            print("-" * 30)
+                            print("Alterando:")
+                            for x in range(len(dmg)):
+                                print(f"{x+1} - Dano: {dmg[x]}, Duração: {dura_dmg[x]}")
+                            opt = input("Escolha uma opção: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                if validate_integer(opt) == True:
+                                    opt = int(opt)
+                                    if opt < 0 or opt > len(dmg):
+                                        print("Opção inválida, tente novamente")
+                                        opt = input("Escolha uma opção: (0 para cancelar) ")
+                                    else:
+                                        break
+                                else:
+                                    print("Opção inválida, tente novamente")
+                                    opt = input("Escolha uma opção: (0 para cancelar) ")
+                            if opt == 0:
+                                break
+                            # damage
+                            esc = input("Digite o dano por turno: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                    if validate_integer(esc) == True:
+                                        esc = int(esc)
+                                        if esc < 0:
+                                            print("Opção inválida, tente novamente")
+                                            esc = input("Digite o dano por turno: (0 para cancelar) ")
+                                        else:
+                                            break
+                                    else:
+                                        print("Opção inválida, tente novamente")
+                                        esc = input("Digite o dano por turno: (0 para cancelar) ")
+                            if esc == 0:
+                                break
+                            dmg[opt-1] = esc
+
+                            # duration
+                            esc = input("Digite a duração do dano: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                    if validate_integer(esc) == True:
+                                        esc = int(esc)
+                                        if esc < 0:
+                                            print("Opção inválida, tente novamente")
+                                            esc = input("Digite a duração do dano: (0 para cancelar) ")
+                                        else:
+                                            break
+                                    else:
+                                        print("Opção inválida, tente novamente")
+                                        esc = input("Digite a duração do dano: (0 para cancelar) ")
+                            if esc == 0:
+                                break
+                            dura_dmg[opt-1] = esc
+
+                        #bye bye
+                        elif ans == "4":
+                            break
+                        else:
+                            print("Opção inválida, tente novamente.")
+
+                #regen per turn
+                elif alt == "2":
+                    while True:
+                        print("=" * 30)
+                        print("Regeneração por turno:\n1 - Adicionar regeneração\n2 - Remover regeneração\n3 - Alterar regeneração\n4 - Sair")
+                        ans = input("Escolha uma opção: ")
+                        #add regen
+                        if ans == "1":
+                            print("-" * 30)
+                            print("Adicionando - ")
+                            #regen
+                            opt = input("Digite a regeneração por turno: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                if validate_integer(opt) == True:
+                                    opt = int(opt)
+                                    if opt < 0:
+                                        print("Opção inválida, tente novamente")
+                                        opt = input("Digite a regeneração por turno: (0 para cancelar) ")
+                                    else:
+                                        break
+                                else:
+                                    print("Opção inválida, tente novamente")
+                                    opt = input("Digite a regeneração por turno: (0 para cancelar) ")
+                            if opt == 0:
+                                break
+                            regen.append(opt)
+
+                            #duration
+                            opt = input("Digite a duração da regeneração: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                if validate_integer(opt) == True:
+                                    opt = int(opt)
+                                    if opt < 0:
+                                        print("Opção inválida, tente novamente")
+                                        opt = input("Digite a duração da regeneração: (0 para cancelar) ")
+                                    else:
+                                        break
+                                else:
+                                    print("Opção inválida, tente novamente")
+                                    opt = input("Digite a duração da regeneração: (0 para cancelar) ")
+                            if opt == 0:
+                                break
+                            dura_regen.append(opt)
+                        #rmv regen
+                        elif ans == "2":
+                            print("-" * 30)
+                            print("Removendo:")
+                            for x in range(len(regen)):
+                                print(f"{x + 1} - Regeneração: {regen[x]}, Duração: {dura_regen[x]}")
+                            opt = input("Escolha uma opção: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                if validate_integer(opt) == True:
+                                    opt = int(opt)
+                                    if opt < 0 or opt > len(regen):
+                                        print("Opção inválida, tente novamente")
+                                        opt = input("Escolha uma opção: (0 para cancelar) ")
+                                    else:
+                                        break
+                                else:
+                                    print("Opção inválida, tente novamente")
+                                    opt = input("Escolha uma opção: (0 para cancelar) ")
+                            if opt == 0:
+                                break
+                            regen.pop(opt - 1)
+                            dura_regen.pop(opt - 1)
+                        #chg regen
+                        elif ans == "3":
+                            print("-" * 30)
+                            print("Alterando:")
+                            for x in range(len(regen)):
+                                print(f"{x + 1} - Regeneração: {regen[x]}, Duração: {dura_regen[x]}")
+                            opt = input("Escolha uma opção: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                if validate_integer(opt) == True:
+                                    opt = int(opt)
+                                    if opt < 0 or opt > len(regen):
+                                        print("Opção inválida, tente novamente")
+                                        opt = input("Escolha uma opção: (0 para cancelar) ")
+                                    else:
+                                        break
+                                else:
+                                    print("Opção inválida, tente novamente")
+                                    opt = input("Escolha uma opção: (0 para cancelar) ")
+                            if opt == 0:
+                                break
+                            # damage
+                            esc = input("Digite a regeneração por turno: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                if validate_integer(esc) == True:
+                                    esc = int(esc)
+                                    if esc < 0:
+                                        print("Opção inválida, tente novamente")
+                                        esc = input("Digite a regeneração por turno: (0 para cancelar) ")
+                                    else:
+                                        break
+                                else:
+                                    print("Opção inválida, tente novamente")
+                                    esc = input("Digite a regeneração por turno: (0 para cancelar) ")
+                            if esc == 0:
+                                break
+                            regen[opt - 1] = esc
+
+                            # duration
+                            esc = input("Digite a duração da regeneração: (0 para cancelar) ")
+                            # validate the input
+                            while True:
+                                if validate_integer(esc) == True:
+                                    esc = int(esc)
+                                    if esc < 0:
+                                        print("Opção inválida, tente novamente")
+                                        esc = input("Digite a regeneração por turno: (0 para cancelar) ")
+                                    else:
+                                        break
+                                else:
+                                    print("Opção inválida, tente novamente")
+                                    esc = input("Digite a regeneração por turno: (0 para cancelar) ")
+                            if esc == 0:
+                                break
+                            dura_regen[opt - 1] = esc
+                        #bye bye
+                        elif ans == "4":
+                            break
+                        else:
+                            print("Opção inválida, tente novamente")
+
+                #bye bye
+                elif alt == "3":
+                    break
+
+                #womp womp
+                else:
+                    print("oppção inválida tente novamente")
+        #show inventory, magics, etc. - OK
+        elif ans == "4":
+            pepe()
+            input("Enter para continuar")
+
+        #create a new function, just to limit the number of things you can edit, or let it all...? THINK LATER
+        elif ans == "5":
+            edit_character_sheet()
+
+        #bye bye
+        elif ans == "6":
+            alt = input("Tem certeza que deseja sair? As alterações serão apagadas.\n1 - SIM\n2 - NÃO")
+            if alt == "1":
+                break
+            elif alt == "2":
+                print()
+            else:
+                print("Opção inválida, tente novamente.")
+                alt = input("Tem certeza que deseja sair? As alterações serão apagadas.\n1 - SIM\2n - NÃO")
+        #womp womp
+        else:
+            print("Opção inválida, tente novamente.")
+            sleep(1)
+
+
+
+    #OLD BATTLE MODE
+    """while True:
         print("=" * 30)
-        print("""O que deseja alterar?
+        print("O que deseja alterar?
         1 - Basics (Name, level, race...)
         2 - Attributes (Strength, agility, spirit...)
         3 - Skills (athletics, memory, seduction...)
         4 - Status (HP, armor, favorites...)
         5 - Others (Annotation, magic, inventory...)
-        6 - Sair""")
+        6 - Sair")
         print("=" * 50)
         ans = input("Digite sua opção: ")
         print("-" * 30)
@@ -1815,7 +2440,7 @@ def battle_mode():
             if save == "N":
                 break
             else:
-                break
+                break"""
 
 
 
