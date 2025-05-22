@@ -1,3 +1,4 @@
+from idlelib.iomenu import encoding
 from random import randint
 from time import sleep
 from colorama import Fore, Style
@@ -49,32 +50,35 @@ ficha_1 = {"player": "", "name": "", "level": 1, "attributes point": 0,
 ficha_2 = {"HP": 0, "SP": 0, "speed": 0, "armor": 0, "resistance": 0, "slots": []}
 ficha_3 = {"annotation": "", "magic": [], "ability": [], "weight": 0, "inventory": [], "lore": ""}
 using_weight = 0
+skill_points = 0
+hp_atual = ficha_2["HP"]
+sp_atual = ficha_2["SP"]
 favorites = {}
 # favorites order = "number": [sides / modifier / number of rolls]
 # slots order = "name": [roll, effect/damage]
 # magic order = "name": [roll, effect/damage]
 # ability oroder = "name": [roll, effect/damage]
-# inventory order = "name": [weight, value, extra info]
+# inventory order = "name": [weight, value, extra info, quantity]
 modificador = [{"imperito": -1}, {"aprendiz": 1}, {"adepto": 3}, {"mestre": 5}]
 cores = [Fore.RED, Fore.GREEN, Fore.LIGHTGREEN_EX, Fore.LIGHTYELLOW_EX, Fore.MAGENTA, Fore.LIGHTCYAN_EX, Fore.CYAN, Fore.LIGHTBLUE_EX]
 
 
 # A way to test the type of success, a unique mechanic from our system
 def success(dice, mod, cd):
-    soma = dice + mod - cd
+    soma = dice + mod - abs(cd)
     result = ''
     if dice == 1:
         result = 'Fracasso Extremo'
+    elif dice == 20:
+        result = 'Sucesso Extremo'
     elif soma <= -10:
         result = 'Fracasso Crítico'
     elif -9 <= soma <= -1:
         result = 'Fracasso'
     elif 9 >= soma >= 0:
         result = 'Sucesso'
-    elif 20 > soma >= 10:
+    elif soma >= 10:
         result = 'Sucesso Crítico'
-    elif dice == 20:
-        result = 'Sucesso Extremo'
     return result
 
 
@@ -105,7 +109,7 @@ def validate_integer(user_input):
 def evolve_status(status, level_pre_evo):
     if status == "HP":
         hp_antes = escalonamento(8, 32, 48, 6, 4, level_pre_evo)
-        hp_agora = escalonamento(8, 32, 48, 6, 4, ficha_1["level"])
+        hp_agora = escalonamento(8, 32, 48, 6, 4, ficha_1["attributes"]["endurance"])
         aumento = hp_agora - hp_antes
         return aumento
     elif status == "SP":
@@ -125,9 +129,154 @@ def evolve_status(status, level_pre_evo):
         return aumento
     elif status == "HP2":
         hp_antes = escalonamento(0, 4, 8, 1, 1, level_pre_evo)
-        hp_agora = escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])
+        hp_agora = escalonamento(0, 4, 8, 1, 1, ficha_1["level"])
         aumento = hp_agora - hp_antes
         return aumento
+
+
+# calculates the hp gain per level
+def hp_per_level(num_rolls, dice):
+    aumento_total = 0
+    for x in range(num_rolls):
+        aumento = randint(1, dice)
+        print("-" * 30)
+        print(f"{x + 1}° dado:", end = " ")
+        sleep(2)
+        print(aumento)
+        print("-" * 30)
+        # a one chance re-roll
+        while True:
+            escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
+            if escolha == "1":
+                aumento = randint(1, dice)
+                print("-" * 30)
+                print(f"{x + 1}° dado rejogado:", end = " ")
+                sleep(1)
+                print(aumento)
+                break
+            elif escolha == "2":
+                break
+            else:
+                print("Escolha inválida, tente novamente.")
+        aumento_total += aumento
+    return aumento_total
+
+
+def salvar():
+    # saving basics
+    with open("dados/basics.txt", "w", encoding="utf-8") as f:
+        salvante = []
+        for item, valor in ficha_1.items():
+            if item == "attributes" or item == "skills":
+                pass
+            else:
+                if validate_integer(valor) == True:
+                    valor = str(valor)
+                salvante.append(valor)
+        f.write("#".join(salvante))
+    # saving attributes
+    with open("dados/attributes.txt", "w", encoding="utf-8") as f:
+        salvante = []
+        # making attributes usable in write
+        lista_atributo = []
+        for x in ficha_1["attributes"].values():
+            lista_atributo.append(str(x))
+        f.write("#".join(lista_atributo))
+    # saving skills
+    with open("dados/skills.txt", "w", encoding="utf-8") as f:
+        salvante = []
+        # making skills usable in write
+        lista_pericia = []
+        for x in ficha_1["skills"].keys():
+            for y, z in ficha_1["skills"][x].items():
+                lista_pericia.append(str(z))
+        f.write("#".join(lista_pericia))
+    # saving status
+    with open("dados/status.txt", "w", encoding="utf-8") as f:
+        salvante = []
+        for item, valor in ficha_2.items():
+            if item == "slots":
+                pass
+            else:
+                if validate_integer(valor) == True:
+                    valor = str(valor)
+                salvante.append(valor)
+        f.write("#".join(salvante))
+    # saving slots
+    with open("dados/slots.txt", "w", encoding="utf-8") as f:
+        # slots order = "name": [roll, effect/damage]
+        lista_slots = []
+        for slots in ficha_2["slots"]:
+            for nome, detalhes in slots.items():
+                lista_slots.append(nome)
+                for x in detalhes:
+                    lista_slots.append(x)
+        f.write("#".join(lista_slots))
+    # saving others
+    with open("dados/others.txt", "w", encoding="utf-8") as f:
+        salvante = []
+        for item, valor in ficha_3.items():
+            if item == "annotation" or item == "weight" or item == "lore":
+                salvante.append(str(valor))
+        f.write("#".join(salvante))
+    # saving magic
+    with open("dados/magic.txt", "w", encoding="utf-8") as f:
+        # magic order = "name": [roll, effect/damage]
+        lista_magias = []
+        for magias in ficha_3["magic"]:
+            for nome, detalhes in magias.items():
+                lista_magias.append(nome)
+                for x in detalhes:
+                    lista_magias.append(x)
+        f.write("#".join(lista_magias))
+    # saving ability
+    with open("dados/ability.txt", "w", encoding="utf-8") as f:
+        # ability oroder = "name": [roll, effect/damage]
+        lista_habilid = []
+        for habilidades in ficha_3["ability"]:
+            for nome, detalhes in habilidades.items():
+                lista_habilid.append(nome)
+                for x in detalhes:
+                    lista_habilid.append(x)
+        f.write("#".join(lista_habilid))
+    # saving inventory
+    with open("dados/inventory.txt", "w", encoding="utf-8") as f:
+        # inventory order = "name": [weight, value, extra info, quantity]
+        lista_itens = []
+        for habilidades in ficha_3["inventory"]:
+            for nome, detalhes in habilidades.items():
+                lista_itens.append(nome)
+                for x in detalhes:
+                    lista_itens.append(str(x))
+        f.write("#".join(lista_itens))
+    # saving favorites rolls
+    with open("dados/favorites.txt", "w", encoding="utf-8") as f:
+        # favorites order = "number": [sides / modifier / number of rolls]
+        lista_favorites = []
+        for fav, detalhes in favorites.items():
+            lista_favorites.append(str(fav))
+            for x in detalhes:
+                lista_favorites.append(str(x))
+        f.write("#".join(lista_favorites))
+    # saving some extra things
+    with open("dados/extra.txt", "w", encoding="utf-8") as f:
+        lista_extras = [str(hp_atual), str(sp_atual), str(skill_points), str(using_weight), str(ficha)]
+        f.write("#".join(lista_extras))
+
+#VOU PRECISAR CONVERTER TUDO EM STR, DEPOIS DESCONVERTER EM INT
+
+def convert(valor):
+    if validate_integer(valor) == True:
+        valor = int(valor)
+    return valor
+#with open("valores.txt", "r") as arquivo:
+#    linhas = arquivo.readlines()
+#    numeros = [int(linha.strip()) for linha in linhas]
+
+
+def salvar_manual():
+    pass
+
 
 def dice_roll():
     while True:
@@ -367,63 +516,128 @@ def dice_roll():
 
         #rolls specifically to tests
         elif ans == 3:
-            print("="*30)
-            quant = 3 #input("Digite quantas rolagens serão feitas: ")
-            # validate the input
-            while True:
-                if validate_integer(quant) == True:
-                    quant = int(quant)
-                    break
-                else:
-                    print("Opção inválida, tente novamente.")
-                    quant = input("Digite quantas rolagens serão feitas: ")
+            if ficha == False:
+                print("Você não possui uma ficha, crie uma.")
+            else:
+                # making attributes numeric
+                lista_atributo = list(ficha_1["attributes"])
 
-            mod = []
-            #to add multiples mods, 0 to stop
-            while True:
-                mod_quant = 1
-                mod_quant = input("Digite o modificador (pode digitar individualmente, 0 para parar): ")
+                # making skills numeric
+                lista_pericia = []
+                for x in ficha_1["skills"].keys():
+                    lista_pericia += list(ficha_1["skills"][x])
 
+                soma = 0
+                mod = []
+                #print the attributes/skills
+                pupu()
+                print("-" * 30)
+                print("Rolagem de testes: ")
+                atri = input("Qual atributo será usado? (0 para cancelar) ")
                 # validate the input
                 while True:
-                    if validate_integer(mod_quant) == True:
-                        mod_quant = int(mod_quant)
-                        break
+                    if validate_integer(atri) == True:
+                        atri = int(atri)
+                        if atri < 0 or atri > 8:
+                            print("Opção inválida, tente novamente")
+                            atri = input("Qual atributo será usado? (0 para cancelar) ")
+                        else:
+                            break
                     else:
                         print("Opção inválida, tente novamente")
-                        mod_quant = input("Digite o modificador: ")
-                if mod_quant != 0:
-                    mod.append(mod_quant)
-                else:
+                        atri = input("Qual atributo será usado? (0 para cancelar) ")
+                if atri == 0:
                     break
+                mod_att = escalonamento(-4,0,4,1,1,ficha_1["attributes"][lista_atributo[atri-1]])
+                mod.append(mod_att)
 
-            #input to DC
-            dc = input("Digite o nível de desafio: ")
-            # validate the input
-            while True:
-                if validate_integer(dc) == True:
-                    dc = int(dc)
+                print("-"*30)
+
+                peri = input("Qual perícia será usada? (0 para cancelar) ")
+                # validate input
+                while True:
+                    if validate_integer(peri) == True:
+                        peri = int(peri)
+                        if peri < 0 or peri > 31:
+                            print("Opção inválida, tente novamente")
+                            peri = input("Qual perícia será usada? (0 para cancelar) ")
+                        else:
+                            break
+                    else:
+                        print("Opção inválida, tente novamente")
+                        peri = input("Qual perícia será usada? (0 para cancelar) ")
+                if peri == 0:
                     break
-                else:
-                    print("Opção inválida, tente novamente.")
-                    dc = input("Digite o nível de desafio: ")
+                for x in ficha_1["skills"].items():
+                    for y, z in ficha_1["skills"][x[0]].items():
+                        if lista_pericia[peri - 1] == y:
+                            if z == 0:
+                                mod.append(-1)
+                            elif z == 1:
+                                mod.append(1)
+                            elif z == 2:
+                                mod.append(3)
+                            elif z == 3:
+                                mod.append(5)
 
+                print("-" * 30)
+                quant = input("Digite quantas rolagens serão feitas: ") #3
+                # validate the input
+                while True:
+                    if validate_integer(quant) == True:
+                        quant = int(quant)
+                        break
+                    else:
+                        print("Opção inválida, tente novamente.")
+                        quant = input("Digite quantas rolagens serão feitas: ")
 
-            result = []
-            total = []
-            for x in range(quant):
-                soma = 0
-                result.append(randint(1,20))
+                print("-" * 30)
+                #to add multiples mods, 0 to stop
+                print("Digite o modificado extra (Atributo e perícia já estão inclusos): ")
+                while True:
+                    #mod_quant = 1 DELETE LATER
+                    mod_quant = input("Pode digitar individualmente, 0 para parar): ")
+
+                    # validate the input
+                    while True:
+                        if validate_integer(mod_quant) == True:
+                            mod_quant = int(mod_quant)
+                            break
+                        else:
+                            print("Opção inválida, tente novamente")
+                            mod_quant = input("Digite o modificador: ")
+                    if mod_quant != 0:
+                        mod.append(mod_quant)
+                    else:
+                        break
+
+                print("-" * 30)
+                #input to DC
+                dc = input("Digite o nível de desafio: ")
+                # validate the input
+                while True:
+                    if validate_integer(dc) == True:
+                        dc = int(dc)
+                        break
+                    else:
+                        print("Opção inválida, tente novamente.")
+                        dc = input("Digite o nível de desafio: ")
+                print("-" * 30)
+
+                result = []
+                total = []
                 for y in range(len(mod)):
                     soma += mod[y]
-                total.append(result[x] + soma - abs(dc))
-                if soma < 0:
-                    print(f"{result[x]} - {abs(soma)} - {abs(dc)} = {total[x]}; {success(20, soma, dc)}")
-                else:
-                    print(f"{result[x]} + {soma} - {abs(dc)} = {total[x]}")
-            print("="*30)
-            print(f"maior = {max(total)}; {success(max(total), soma, dc)}")
-            print(f"menor = {min(total)}; {success(min(total), soma, dc)}")
+                for x in range(quant):
+                    result.append(randint(1,20))
+                    total.append(result[x] + soma - abs(dc))
+                    if soma < 0:
+                        print(f"{result[x]} - {abs(soma)} - {abs(dc)} = {total[x]}; {success(result[x], soma, dc)}")
+                    else:
+                        print(f"{result[x]} + {soma} - {abs(dc)} = {total[x]}; {success(result[x], soma, dc)}")
+                print("="*30)
+                print(f"maior = {max(total)}; {success(max(result), soma, dc)}")
+                print(f"menor = {min(total)}; {success(min(result), soma, dc)}")
 
         # creating, removing or changing a favorite roll
         elif ans == 4:
@@ -515,7 +729,9 @@ def dice_roll():
                     while True:
                         if validate_integer(ans) == True:
                             ans = int(ans)
-                            if ans < min(favorites) or ans > max(favorites):
+                            if ans == 0:
+                                break
+                            elif ans < min(favorites) or ans > max(favorites):
                                 print("Opção inválida, tente novamente")
                                 ans = input("Escolha uma opção para remover: (0 para cancelar) ")
                             else:
@@ -583,7 +799,9 @@ def dice_roll():
                     while True:
                         if validate_integer(ans) == True:
                             ans = int(ans)
-                            if ans < min(favorites) or ans > max(favorites):
+                            if ans == 0:
+                                break
+                            elif ans < min(favorites) or ans > max(favorites):
                                 print("Opção inválida, tente novamente")
                                 ans = input("Digite o dado que você quer alterar: (0 para cancelar) ")
                             else:
@@ -622,6 +840,8 @@ def dice_roll():
                                 favorites[ans][0] = input("Quantidade de lados do dado: ")
                                 favorites[ans][1] = input("Quantidade do modificador: ")
                                 favorites[ans][2] = input("Quantidade de dados: (0 para não pré-definir) ")
+
+                # SALVAR
 
                 # just cancel
                 elif ans == 4:
@@ -676,16 +896,16 @@ def character_sheet(jogador="bruno"):
     ficha_3["magic"].append({"Parede de gelo": ["1d20+3", "1d4"]})
     ficha_3["ability"].append({"Corte giratório": ["1d20-5", "1d8"]})
     ficha_3["ability"].append({"Corte rápido": ["1d20-4", "1d4"]})
-    ficha_3["inventory"].append({"Livro de magia": [1, 100, "Permite usar magia"]})
-    ficha_3["inventory"].append({"Espada de ferro": [5, 18, "1d6 di danu"]})
+    ficha_3["inventory"].append({"Livro de magia": [1, 100, "Permite usar magia", 3]})
+    ficha_3["inventory"].append({"Espada de ferro": [5, 18, "1d6 di danu", 1]})
     ficha_3["annotation"] = "machucado"
     ficha_3["lore"] = "roubo muito >:D"
     for x in range(len(ficha_3["inventory"])):
         for nome in ficha_3["inventory"][x]:
             using_weight += ficha_3["inventory"][x][nome][0]
-    # ^ DELETE LATER ALL THESEE THINGS
     #using_weight += ficha_3["inventory"][0]["Livro de magia"][0]
     #using_weight += ficha_3["inventory"][1]["Espada de ferro"][0]
+    # ^ DELETE LATER ALL THESEE THINGS
     global ficha
     ficha = True
     print("="*30)
@@ -800,7 +1020,7 @@ def character_sheet(jogador="bruno"):
     #"""
 
     #calculating the HP
-    ficha_2["HP"] = escalonamento(8, 32, 48, 6, 4, ficha_1["level"])
+    ficha_2["HP"] = escalonamento(8, 32, 48, 6, 4, ficha_1["attributes"]["endurance"])
     #calculating the SP
     ficha_2["SP"] = escalonamento(4, 20, 28, 4, 2, ficha_1["attributes"]["spirit"])
     #calculating the speed
@@ -808,12 +1028,31 @@ def character_sheet(jogador="bruno"):
     #calculating the weight
     ficha_3["weight"] = escalonamento(10, 34, 50, 6, 4, ficha_1["attributes"]["strength"])
 
-    print("-"*30)
-    #calculating the HP per resistance
+    #how many rolls i'll do
+    num_dados = escalonamento(0, 4, 8, 1, 1, ficha_1["level"])
+    # calculating the HP per level
+    """
     if ficha_1["race"].lower() == "humano":
+        print(f"Serão jogados {num_dados} dados de 2 lados, os resultados serão somados à sua vida!")
+        ficha_2["HP"] += hp_per_level(num_dados, 2)
+    elif ficha_1["race"].lower() == "narim":
+        print(f"Serão jogados {num_dados} dados de 3 lados, os resultados serão somados à sua vida!")
+        ficha_2["HP"] += hp_per_level(num_dados, 3)
+    elif ficha_1["race"].lower() == "talvano" or ficha_1["race"].lower() == "nefelin":
+        print(f"Serão jogados {num_dados} dados de 4 lados, os resultados serão somados à sua vida!")
+        ficha_2["HP"] += hp_per_level(num_dados, 4)
+    elif ficha_1["race"].lower() == "alvoriano":
+        print(f"Serão jogados {num_dados} dados de 6 lados, os resultados serão somados à sua vida!")
+        ficha_2["HP"] += hp_per_level(num_dados, 6)
+    """
+
+
+
+    #OLD HP PER LEVEL, DELETE LATER
+    """if ficha_1["race"].lower() == "humano":
         #the scale tell how many rolls it'll do
-        print(f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 2 lados, os resultados serão somados à sua vida!")
-        for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+        print(f"Serão jogados {num_dados} dados de 2 lados, os resultados serão somados à sua vida!")
+        for x in range(num_dados):
             sleep(2)
             aumento = randint(1,2)
             print("-" * 30)
@@ -834,8 +1073,8 @@ def character_sheet(jogador="bruno"):
             ficha_2["HP"] += aumento
     elif ficha_1["race"].lower() == "narim":
         #the scale tell how many rolls it'll do
-        print(f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 3 lados, os resultados serão somados à sua vida!")
-        for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+        print(f"Serão jogados {num_dados} dados de 3 lados, os resultados serão somados à sua vida!")
+        for x in range(num_dados):
             sleep(2)
             aumento = randint(1,3)
             print("-" * 30)
@@ -856,8 +1095,8 @@ def character_sheet(jogador="bruno"):
             ficha_2["HP"] += aumento
     elif ficha_1["race"].lower() == "talvano" or ficha_1["race"].lower() == "nefelin":
         #the scale tell how many rolls it'll do
-        print(f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 4 lados, os resultados serão somados à sua vida!")
-        for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+        print(f"Serão jogados {num_dados} dados de 4 lados, os resultados serão somados à sua vida!")
+        for x in range(num_dados):
             sleep(2)
             aumento = randint(1,4)
             print("-" * 30)
@@ -878,8 +1117,8 @@ def character_sheet(jogador="bruno"):
             ficha_2["HP"] += aumento
     elif ficha_1["race"].lower() == "alvoriano":
         #the scale tell how many rolls it'll do
-        print(f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 6 lados, os resultados serão somados à sua vida!")
-        for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
+        print(f"Serão jogados {num_dados} dados de 6 lados, os resultados serão somados à sua vida!")
+        for x in range(num_dados):
             sleep(2)
             aumento = randint(1,6)
             print("-" * 30)
@@ -899,6 +1138,7 @@ def character_sheet(jogador="bruno"):
                 else:
                     print("Escolha inválida, tente novamente.")
             ficha_2["HP"] += aumento
+    """
 
     ficha_2["armor"] = 0
     ficha_2["resistance"] = 0
@@ -907,6 +1147,7 @@ def character_sheet(jogador="bruno"):
     """for x in ficha_3:
         if x != "weight":
             ficha_3[x] = input(f"Digite {x} ")"""
+    #SALVAR
 
 
 def show_character_sheet():
@@ -922,7 +1163,8 @@ def show_character_sheet():
     color_count = 0
     for x, y in ficha_1["attributes"].items():
         cor = cores[color_count % len(cores)]
-        print(cor, f"{x.capitalize()} {Style.RESET_ALL}=", y)
+        mod_att = escalonamento(-4, 0, 4, 1, 1, ficha_1["attributes"][x])
+        print(cor, f"{x.capitalize()} {Style.RESET_ALL}= {y}, {cor}Modificador{Style.RESET_ALL}: {mod_att}")
         color_count += 1
 
     print("=" * 30)
@@ -1015,7 +1257,7 @@ def edit_character_sheet():
             while True:
                 if validate_integer(alt) == True:
                     alt = int(alt)
-                    if alt < 1 or alt > 6:
+                    if alt < 0 or alt > 6:
                         print("Opção inválida, tente novamente")
                         alt = input("O que você deseja alterar? (0 para cancelar) ")
                     else:
@@ -1025,7 +1267,71 @@ def edit_character_sheet():
                     alt = input("O que você deseja alterar? (0 para cancelar) ")
             if alt == 0:
                 break
-            ficha_1[changeable[alt-1]] = input(f"Qual o novo {changeable[alt-1]}? ")
+
+            if changeable[alt-1] == "level":
+                # for the function evolve_status
+                level_atual = ficha_1["level"]
+                ans = input(f"Qual o novo {changeable[alt-1]}? (0 para cancelar) ")
+                # validate the input
+                while True:
+                    if validate_integer(ans) == True:
+                        ans = int(ans)
+                        if ans < 0 or ans > 20:
+                            print("Opção inválida, tente novamente")
+                            ans = input("Escolha sua opção: ")
+                        else:
+                            break
+                    else:
+                        print("Opção inválida, tente novamente")
+                        ans = input("Escolha sua opção: ")
+                if ans == 0:
+                    break
+
+                ficha_1[changeable[alt - 1]] = ans
+                ficha_1["attributes point"] += (2*(ficha_1["level"]-1) - 2*(level_atual-1))
+
+                # calculating the rolls to HP increase
+                num_dados = evolve_status("HP2", level_atual)
+
+                if ficha_1["race"].lower() == "humano":
+                    print(f"Serão jogados {num_dados} dados de 2 lados, os resultados serão somados à sua vida!")
+                    ficha_2["HP"] += hp_per_level(num_dados, 2)
+
+                elif ficha_1["race"].lower() == "narim":
+                    print(f"Serão jogados {num_dados} dados de 3 lados, os resultados serão somados à sua vida!")
+                    ficha_2["HP"] += hp_per_level(num_dados, 3)
+
+                elif ficha_1["race"].lower() == "talvano" or ficha_1["race"].lower() == "nefelin":
+                    print(f"Serão jogados {num_dados} dados de 4 lados, os resultados serão somados à sua vida!")
+                    ficha_2["HP"] += hp_per_level(num_dados, 4)
+
+                elif ficha_1["race"].lower() == "alvoriano":
+                    print(f"Serão jogados {num_dados} dados de 6 lados, os resultados serão somados à sua vida!")
+                    ficha_2["HP"] += hp_per_level(num_dados, 6)
+            else:
+                while True:
+                    novo = input(f"Qual o novo {changeable[alt-1]}? (0 para cancelar) ")
+                    if novo == "0":
+                        break
+                    if changeable[alt-1] == "race":
+                        if novo.lower() in ["humano", "narim", "talvano", "nefelin", "alvoriano"]:
+                            break
+                        else:
+                            print("Raça inválida, tente novamente")
+                    #making sure AP is INT
+                    elif changeable[alt-1] == "attributes point":
+                        # validate the input
+                        while True:
+                            if validate_integer(novo) == True:
+                                novo = int(novo)
+                                break
+                            else:
+                                print("Opção inválida, tente novamente")
+                                novo = input(f"Qual o novo {changeable[alt-1]}? (0 para cancelar) ")
+                    else:
+                        break
+                if novo != 0 and novo != "0":
+                    ficha_1[changeable[alt - 1]] = novo
 
         #change the attributes
         elif ans == 2:
@@ -1067,8 +1373,9 @@ def edit_character_sheet():
             cont = 1
             color_count = 0
             for x, y in ficha_1["attributes"].items():
+                mod_att = escalonamento(-4, 0, 4, 1, 1, ficha_1["attributes"][x])
                 cor = cores[color_count % len(cores)]
-                print(f"{Fore.LIGHTMAGENTA_EX}{cont}{Style.RESET_ALL} - {cor}{x.capitalize()}{Style.RESET_ALL}: {y}", end=' | ')
+                print(f"{Fore.LIGHTMAGENTA_EX}{cont}{Style.RESET_ALL} - {cor}{x.capitalize()}{Style.RESET_ALL}: {y}, mod: {mod_att}", end=' | ')
                 #just so it doesn't become a giant line of attributes
                 if cont == 4:
                     print()
@@ -1077,6 +1384,7 @@ def edit_character_sheet():
                 color_count+=1
             print()
 
+            #choose the attribute
             print("="*30)
             alt = input("O que você deseja alterar? (0 para cancelar) ")
             # validate the input
@@ -1094,6 +1402,7 @@ def edit_character_sheet():
             if alt == 0:
                 break
 
+            #choose the value of the attribute
             valor = input(f"Digite o valor do atributo {lista[alt-1]}: (0 para cancelar) ")
             # validate the input
             while True:
@@ -1109,109 +1418,33 @@ def edit_character_sheet():
                     valor = input(f"Digite o valor do atributo {lista[alt - 1]}: (0 para cancelar) ")
             if valor == 0:
                 break
+
+
+            # for the evolve status
+            level_atual = ficha_1["attributes"][lista[alt - 1]]
+            # updating the attribute
             ficha_1["attributes"][lista[alt - 1]] = valor
 
 
+            #OLD SP, SPEED AND WEIGHT SCALE
+            """
             if lista[alt-1] == "spirit":
                 ficha_2["SP"] = escalonamento(4, 20, 28, 4, 2, ficha_1["attributes"]["spirit"])
             elif lista[alt-1] == "agility":
                 ficha_2["speed"] = escalonamento(3, 11, 15, 2, 1, ficha_1["attributes"]["agility"])
             elif lista[alt-1] == "strength":
                 ficha_3["weight"] = escalonamento(10, 34, 50, 6, 4, ficha_1["attributes"]["strength"])
+            """
+
+            #upgrading the SP, SPEED, WEIGHT, HP
+            if lista[alt - 1] == "spirit":
+                ficha_2["SP"] += evolve_status("SP", level_atual)
+            elif lista[alt - 1] == "agility":
+                ficha_2["speed"] += evolve_status("speed", level_atual)
+            elif lista[alt - 1] == "strength":
+                ficha_3["weight"] += evolve_status("weight", level_atual)
             elif lista[alt-1] == "endurance":
-                # calculating the HP per resistance
-                if ficha_1["race"].lower() == "humano":
-                    # the scale tell how many rolls it'll do
-                    print(
-                        f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 2 lados, os resultados serão somados à sua vida!")
-                    for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
-                        sleep(2)
-                        aumento = randint(1, 2)
-                        print("-" * 30)
-                        print(f"{x + 1}° dado: {aumento}")
-                        print("-" * 30)
-                        # a one chance re-roll
-                        while True:
-                            escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
-                            if escolha == "1":
-                                aumento = randint(1, 2)
-                                print("-" * 30)
-                                print(f"{x + 1}° dado rejogado: {aumento}")
-                                break
-                            elif escolha == "2":
-                                break
-                            else:
-                                print("Escolha inválida, tente novamente.")
-                        ficha_2["HP"] += aumento
-                elif ficha_1["race"].lower() == "narim":
-                    # the scale tell how many rolls it'll do
-                    print(
-                        f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 3 lados, os resultados serão somados à sua vida!")
-                    for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
-                        sleep(2)
-                        aumento = randint(1, 3)
-                        print("-" * 30)
-                        print(f"{x + 1}° dado: {aumento}")
-                        print("-" * 30)
-                        # a one chance re-roll
-                        while True:
-                            escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
-                            if escolha == "1":
-                                aumento = randint(1, 3)
-                                print("-" * 30)
-                                print(f"{x + 1}° dado rejogado: {aumento}")
-                                break
-                            elif escolha == "2":
-                                break
-                            else:
-                                print("Escolha inválida, tente novamente.")
-                        ficha_2["HP"] += aumento
-                elif ficha_1["race"].lower() == "talvano" or ficha_1["race"].lower() == "nefelin":
-                    # the scale tell how many rolls it'll do
-                    print(
-                        f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 4 lados, os resultados serão somados à sua vida!")
-                    for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
-                        sleep(2)
-                        aumento = randint(1, 4)
-                        print("-" * 30)
-                        print(f"{x + 1}° dado: {aumento}")
-                        print("-" * 30)
-                        # a one chance re-roll
-                        while True:
-                            escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
-                            if escolha == "1":
-                                aumento = randint(1, 4)
-                                print("-" * 30)
-                                print(f"{x + 1}° dado rejogado: {aumento}")
-                                break
-                            elif escolha == "2":
-                                break
-                            else:
-                                print("Escolha inválida, tente novamente.")
-                        ficha_2["HP"] += aumento
-                elif ficha_1["race"].lower() == "alvoriano":
-                    # the scale tell how many rolls it'll do
-                    print(
-                        f"Serão jogados {escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])} dados de 6 lados, os resultados serão somados à sua vida!")
-                    for x in range(escalonamento(0, 4, 8, 1, 1, ficha_1["attributes"]["endurance"])):
-                        sleep(2)
-                        aumento = randint(1, 6)
-                        print("-" * 30)
-                        print(f"{x + 1}° dado: {aumento}")
-                        print("-" * 30)
-                        # a one chance re-roll
-                        while True:
-                            escolha = input("Deseja rejogar o dado?\n1 - SIM\n2 - NÃO\n")
-                            if escolha == "1":
-                                aumento = randint(1, 6)
-                                print("-" * 30)
-                                print(f"{x + 1}° dado rejogado: {aumento}")
-                                break
-                            elif escolha == "2":
-                                break
-                            else:
-                                print("Escolha inválida, tente novamente.")
-                        ficha_2["HP"] += aumento
+                ficha_2["HP"] += evolve_status("HP", level_atual)
 
         #change the skills
         elif ans == 3:
@@ -1464,7 +1697,7 @@ def edit_character_sheet():
                         for name, details in ficha_3[x][z].items():
                             if x == "inventory":
                                 print(" " * 3,
-                                      f"~ {name.title()} - Peso: {details[0]}, Valor: {details[1]}, Extra: {details[2]}")
+                                      f"{details[3]} ~ {name.title()} - Peso: {details[0]}, Valor: {details[1]}, Extra: {details[2]}")
                             else:
                                 print(" " * 3,
                                       f"~ {name.title()} - Dado: {details[0]}, Efeito: {details[1].capitalize()}")
@@ -1585,8 +1818,8 @@ def edit_character_sheet():
                     if ans == "1":
                         print("-"*30)
                         print("Adicionando: ")
-                        name = input(f"Digite o nome do item: ")
-                        details1 = input(f"Digite o peso do item: ")
+                        name = input("Digite o nome do item: ")
+                        details1 = input("Digite o peso do item: ")
                         # validate input
                         while True:
                             if validate_integer(details1) == True:
@@ -1595,7 +1828,7 @@ def edit_character_sheet():
                             else:
                                 print("Opção inválida, tente novamente")
                                 details1 = input(f"Digite o valor do item: ")
-                        details2 = input(f"Digite o valor do item: ")
+                        details2 = input("Digite o valor do item: ")
                         # validate input
                         while True:
                             if validate_integer(details2) == True:
@@ -1604,8 +1837,17 @@ def edit_character_sheet():
                             else:
                                 print("Opção inválida, tente novamente")
                                 details2 = input(f"Digite o valor do item: ")
-                        details3 = input(f"Digite algo extra do item: ")
-                        ficha_3[lista[alt - 1]].append({f"{name}": [details1, details2, details3]})
+                        details3 = input("Digite algo extra do item: ")
+                        details4 = input("Digite a quantidade desse item: ")
+                        # validate input
+                        while True:
+                            if validate_integer(details4) == True:
+                                details4 = int(details4)
+                                break
+                            else:
+                                print("Opção inválida, tente novamente")
+                                details4 = input("Digite a quantidade desse item: ")
+                        ficha_3[lista[alt - 1]].append({f"{name}": [details1, details2, details3, details4]})
                     #remove item
                     elif ans == "2":
                         # printing options
@@ -1721,7 +1963,8 @@ def edit_character_sheet():
             using_weight = 0
             for x in range(len(ficha_3["inventory"])):
                 for item in ficha_3["inventory"][x]:
-                    using_weight += abs(ficha_3["inventory"][x][item][0])
+                    print(ficha_3["inventory"][x][item][3])
+                    using_weight += (abs(ficha_3["inventory"][x][item][0])*abs(ficha_3["inventory"][x][item][3]))
 
         #level up
         elif ans == 6:
@@ -1748,7 +1991,27 @@ def edit_character_sheet():
                         ficha_1["level"] += 1
                         ficha_1["attributes point"] += 2
                         # calculating the HP increase
-                        ficha_2["HP"] += evolve_status("HP", level_atual)
+                        num_dados = evolve_status("HP2", level_atual)
+
+                        if ficha_1["race"].lower() == "humano":
+                            print(
+                                f"Serão jogados {num_dados} dados de 2 lados, os resultados serão somados à sua vida!")
+                            ficha_2["HP"] += hp_per_level(num_dados, 2)
+
+                        elif ficha_1["race"].lower() == "narim":
+                            print(
+                                f"Serão jogados {num_dados} dados de 3 lados, os resultados serão somados à sua vida!")
+                            ficha_2["HP"] += hp_per_level(num_dados, 3)
+
+                        elif ficha_1["race"].lower() == "talvano" or ficha_1["race"].lower() == "nefelin":
+                            print(
+                                f"Serão jogados {num_dados} dados de 4 lados, os resultados serão somados à sua vida!")
+                            ficha_2["HP"] += hp_per_level(num_dados, 4)
+
+                        elif ficha_1["race"].lower() == "alvoriano":
+                            print(f"Serão jogados {num_dados} dados de 6 lados, os resultados serão somados à sua vida!")
+                            ficha_2["HP"] += hp_per_level(num_dados, 6)
+
 
                         # printing menu
                         print("-" * 30)
@@ -1815,7 +2078,10 @@ def edit_character_sheet():
                             ficha_1["attributes"][lista[alt - 1]] += valor
                             ficha_1["attributes point"] -= valor
 
-                            if lista[alt - 1] == "spirit":
+                            if lista[alt - 1] == "endurance":
+                                ficha_2["HP"] += evolve_status("HP", level_atual)
+
+                            elif lista[alt - 1] == "spirit":
                                 ficha_2["spirit"] += evolve_status("SP", level_atual)
 
                             elif lista[alt - 1] == "agility":
@@ -1823,6 +2089,7 @@ def edit_character_sheet():
 
                             elif lista[alt - 1] == "strength":
                                 ficha_3["weight"] += evolve_status("weight", level_atual)
+
 
                     elif alt == "2":
                         break
@@ -1904,7 +2171,7 @@ def edit_character_sheet():
                             ficha_1["attributes point"] -= valor
 
                             if lista[alt - 1] == "endurance":
-                                ficha_2["HP"] += evolve_status("HP2", level_atual)
+                                ficha_2["HP"] += evolve_status("HP", level_atual)
 
                             elif lista[alt - 1] == "spirit":
                                 ficha_2["SP"] += evolve_status("SP", level_atual)
@@ -1934,7 +2201,9 @@ def edit_character_sheet():
                 break
             else:
                 print("Salvando... de mentirinha")
+                #SALVAR
                 break
+
 
 #show basics
 def papa(hp_atual, sp_atual):
@@ -1996,7 +2265,8 @@ def pupu():
     color_count = 0
     for x, y in ficha_1["attributes"].items():
         cor = cores[color_count % len(cores)]
-        print(f"{Fore.LIGHTMAGENTA_EX}{cont}{Style.RESET_ALL} - {cor}{x.capitalize()}{Style.RESET_ALL}: {y}", end=' | ')
+        mod_att = escalonamento(-4, 0, 4, 1, 1, ficha_1["attributes"][x])
+        print(f"{Fore.LIGHTMAGENTA_EX}{cont}{Style.RESET_ALL} - {cor}{x.capitalize()}{Style.RESET_ALL}: {y}, mod: {mod_att}", end=' | ')
         # just so it doesn't become a giant line of attributes
         if cont == 4:
             print()
@@ -2005,8 +2275,8 @@ def pupu():
         color_count += 1
     print()
 
+    cont = 1
     print("=" * 30)
-    # NEW PRINT SKILLS
     print("SKILLS:")
     for i, x in enumerate(ficha_1["skills"]):
         cor = cores[i % len(cores)]
@@ -2014,12 +2284,14 @@ def pupu():
         for y, z in ficha_1["skills"][x].items():
             dominio = list(modificador[z].keys())
             valor = list(modificador[z].values())
-            print(f"{y.capitalize()} = {dominio[0].capitalize()}, {valor[0]}", end=' | ')
+            print(f"{Fore.LIGHTMAGENTA_EX}{cont}{Style.RESET_ALL} - {y.capitalize()} = {dominio[0].capitalize()}, {valor[0]}", end=' | ')
+            cont += 1
         print()
 
+
 def battle_mode():
-    hp = ficha_2["HP"]
-    sp = ficha_2["SP"]
+    global hp_atual
+    global sp_atual
     turns = 1
     dmg = []
     dura_dmg = []
@@ -2029,7 +2301,7 @@ def battle_mode():
         total_dmg = 0
         total_regen = 0
         print("="*30)
-        papa(hp, sp)
+        papa(hp_atual, sp_atual)
         print("-"*30)
         print("VOCÊ ESTÁ NO MODO BATALHA, NENHUMA ALTERAÇÃO FEITA SERÁ SALVA! ") #maybe some will be saved
         print(f"Turno = {turns}°\n  1 - Passar turno\n  2 - Girar dado\n  3 - Dano/Regeneração\n  4 - Mostrar itens e magias\n  5 - Editar ficha\n  6 - Sair")
@@ -2052,19 +2324,45 @@ def battle_mode():
                 print("Deseja passar o turno?\n1 - Sim\n2 - Não")
                 alt = input("Escolha sua opção: ")
                 if alt == "1":
+                    #THINK LATER TO MAKE IT BETTER
+                    gasto = input("Qual foi seu gasto de mana? ")
+                    #validate input
+                    while True:
+                        if validate_integer(gasto) == True:
+                            gasto = int(gasto)
+                            break
+                        else:
+                            print("Valor inválido, tente novamente.")
+                            gasto = input("Qual foi seu gasto de mana? ")
+                    sp_atual -= gasto
                     turns += 1
+                    # taking dmg per turn
                     for x in range(len(dmg)):
-                        pass
+                        hp_atual -= dmg[x]
+                        dura_dmg[x] -= 1
+                        if dura_dmg[x] == 0:
+                            dura_dmg.pop(x)
+                            dmg.pop(x)
+                    # receiving regen per turn
                     for x in range(len(regen)):
-                        pass
+                        hp_atual += regen[x]
+                        dura_regen[x] -= 1
+                        if dura_regen[x] == 0:
+                            dura_regen.pop(x)
+                            regen.pop(x)
+                    if hp_atual > ficha_2["HP"]/2:
+                        ficha_1["situation"] = "Alive/Healthy"
+                    elif ficha_2["HP"]/2 >= hp_atual > 0:
+                        ficha_1["situation"] = "Alive/Hurt"
+                    elif 0 >= hp_atual:
+                        ficha_1["situation"] = "Dead"
                     break
                 elif alt == "2":
                     break
                 else:
                     print("Opção inválida, tente novamente")
-        # shows attributes/skills and roll dice
+        # roll dice
         elif ans == "2":
-            pupu()
             dice_roll()
         # suffer damage, ticks damage per turn? or make it only when presses "next turn"
         elif ans == "3":
@@ -2343,16 +2641,16 @@ def battle_mode():
                 #womp womp
                 else:
                     print("oppção inválida tente novamente")
-        #show inventory, magics, etc. - OK
+        # show inventory, magics, etc. - OK
         elif ans == "4":
             pepe()
             input("Enter para continuar")
 
-        #create a new function, just to limit the number of things you can edit, or let it all...? THINK LATER
+        # create a new function, just to limit the number of things you can edit, or let it all...? THINK LATER
         elif ans == "5":
             edit_character_sheet()
 
-        #bye bye
+        # bye bye
         elif ans == "6":
             alt = input("Tem certeza que deseja sair? As alterações serão apagadas.\n1 - SIM\n2 - NÃO")
             if alt == "1":
@@ -2362,85 +2660,13 @@ def battle_mode():
             else:
                 print("Opção inválida, tente novamente.")
                 alt = input("Tem certeza que deseja sair? As alterações serão apagadas.\n1 - SIM\2n - NÃO")
-        #womp womp
+        # womp womp
         else:
             print("Opção inválida, tente novamente.")
             sleep(1)
+    #SALVAR, MAS SÓ HP E SP ATUAL, SITUAÇÃO DE VIDA, INVENTÁRIO, QUANTIDADE DO INVENTÁRIO... algumas coisas ai
 
 
-
-    #OLD BATTLE MODE
-    """while True:
-        print("=" * 30)
-        print("O que deseja alterar?
-        1 - Basics (Name, level, race...)
-        2 - Attributes (Strength, agility, spirit...)
-        3 - Skills (athletics, memory, seduction...)
-        4 - Status (HP, armor, favorites...)
-        5 - Others (Annotation, magic, inventory...)
-        6 - Sair")
-        print("=" * 50)
-        ans = input("Digite sua opção: ")
-        print("-" * 30)
-        if ans == "1":
-            print("Basics:")
-            for x, y in ficha_1.items():
-                if x != "skills" and x != "attributes":
-                    print(f"{x.capitalize()}: {y}")
-            alt = input("O que você deseja alterar? (Digite o nome da característica) ")
-            ficha_1[alt] = input(f"Qual o novo {alt}? ")
-
-        elif ans == "2":
-            print("Attributes:")
-            for x, y in ficha_1["attributes"].items():
-                print(f"{x.capitalize()}: {y}", end=' | ')
-            print()
-            alt = input("O que você deseja alterar? (Digite o nome do atributo) ")
-            ficha_1["attributes"][alt] = input(f"Qual o novo {alt}? ")
-
-        elif ans == "3":
-            print("Skills:")
-            for x in ficha_1["skills"].keys():
-                print(f"{x.capitalize()}:")
-                for y in ficha_1["skills"][x]:
-                    print(f"{y.capitalize()} = {ficha_1["skills"][x][y]}", end=' | ')
-                print()
-            alt = input("O que você deseja alterar? (Digite o nome da perícia) ")
-            # provisório
-            ficha_1["skills"]["strength"][alt] = int(input(f"Qual o novo {alt}? "))
-            # ficha[] fazer algum sistema para procurar?
-
-        elif ans == "4":
-            print("Status")
-            for x, y in ficha_2.items():
-                print(f"{x.capitalize()}: {y}")
-            alt = input("O que você deseja alterar? (Digite o nome do status) ")
-            if alt == "slots":
-                item = input("Qual o novo atalho? (nome da espada, magia, etc...) ")
-                rol = input("Qual a rolagem? (Ex.: 1d20+5) ")
-                prop = input("Qual a propriedade? (Dano, efeito...) ")
-                ficha_2["slots"][item] = []
-                ficha_2["slots"][item].append(rol)
-                ficha_2["slots"][item].append(prop)
-            else:
-                ficha_2[alt] = input(f"Qual o novo {alt}? ")
-
-        elif ans == "5":
-            print("Others")
-            for x, y in ficha_3.items():
-                print(f"{x.capitalize()}: {y}")
-            alt = input("O que você deseja alterar? (Digite nome) ")
-            if alt == "magic" or alt == "ability" or alt == "inventory":
-                ficha_3[alt].append(input("O que você deseja escrever? "))
-            else:
-                ficha_3[alt] = input("O que você deseja escrever? ")
-
-        elif ans == "6":
-            save = input("Deseja salvar as alterações? [S/N]")
-            if save == "N":
-                break
-            else:
-                break"""
 
 
 
@@ -2520,6 +2746,7 @@ Sedução
 """
 
 while True:
+    #CARREGAR
     print("=" * 30)
     print("Sistema de ficha - Genesis")
     print("=" * 30)
@@ -2605,14 +2832,16 @@ while True:
                 character_sheet()
     #save
     elif ans == 6:
-        if ficha == False:
+        """if ficha == False:
             print("Você não possui ficha, crie uma.")
             sleep(1)
         else:
             ans = int(input("Deseja salvar e substituir o salvamento anterior?\n1 - SIM\n2 - NÃO\n"))
             if ans == 1:
-                print("Ainda n tem nada :3")
-                #salv_manual()
+                print("Ainda n tem nada :3")"""
+        salvar()
+                #SALVAR_manual()
+
     #exit
     elif ans == 7:
         print("Saindo...")
