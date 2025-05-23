@@ -4,7 +4,7 @@ Developing a program to automate a custom RPG system.
 OBJECTIVES:
 * A roll system with custom, predefined and favorites rolls. 
 * A way to see your character sheet, edit it and save the changes.
-* As a bonus, also a mode to modify your CS without saving it (useful during battles, for example).
+* As a bonus, a mode to modify your CS without saving it (useful during battles, for example).
 
 FUTURE: 
 * I'll try to make a UI, never made one so wish me luck xD.
